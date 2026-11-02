@@ -21,7 +21,8 @@
         .card { background-color: #1c1c1e; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
         .form-group { margin-bottom: 12px; }
         label { display: block; font-size: 11px; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; }
-        input[type="text"], input[type="date"], input[type="time"], select { width: 100%; padding: 12px; border-radius: 10px; border: none; background-color: #2c2c2e; color: #fff; font-size: 15px; outline: none; }
+        input[type="text"], input[type="date"], input[type="time"], select, textarea { width: 100%; padding: 12px; border-radius: 10px; border: none; background-color: #2c2c2e; color: #fff; font-size: 15px; outline: none; }
+        textarea { resize: vertical; min-height: 60px; }
         .row { display: flex; gap: 10px; }
         .row .form-group { flex: 1; }
         
@@ -30,6 +31,7 @@
         button:active { opacity: 0.7; }
         
         .add-btn { width: 100%; padding: 14px; border-radius: 12px; background-color: #0a84ff; color: white; font-size: 16px; margin-top: 4px; }
+        .cancel-btn { width: 100%; padding: 10px; border-radius: 10px; background-color: #3a3a3c; color: #ff453a; font-size: 13px; margin-top: 8px; display: none; }
         .notif-btn { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #3a3a3c; background-color: #1c1c1e; color: #30d158; font-size: 13px; margin-bottom: 14px; }
         
         /* Buscador y Filtros */
@@ -46,14 +48,22 @@
 
         /* Lista de Eventos */
         .event-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-        .event-item { background-color: #1c1c1e; border-radius: 14px; padding: 14px; display: flex; align-items: center; justify-content: space-between; }
-        .event-info { display: flex; flex-direction: column; gap: 2px; flex: 1; margin: 0 12px; }
-        .event-title { font-size: 15px; font-weight: 500; word-break: break-word; }
-        .event-time { font-size: 12px; color: #8e8e93; }
+        .event-item { background-color: #1c1c1e; border-radius: 14px; padding: 14px; display: flex; align-items: flex-start; justify-content: space-between; }
+        .event-info { display: flex; flex-direction: column; gap: 4px; flex: 1; margin: 0 12px; }
+        .event-title { font-size: 15px; font-weight: 600; word-break: break-word; }
+        .event-notes { font-size: 13px; color: #aeaeb2; white-space: pre-wrap; word-break: break-word; background-color: #2c2c2e; padding: 8px 10px; border-radius: 8px; margin-top: 4px; }
+        .event-notes a { color: #0a84ff; text-decoration: underline; word-break: break-all; }
+        .event-time { font-size: 12px; color: #8e8e93; margin-top: 2px; }
         .event-item.completed .event-title { text-decoration: line-through; color: #636366; }
+        .event-item.completed .event-notes { color: #636366; background-color: #242426; }
+        .event-item.completed .event-notes a { color: #636366; }
         
-        input[type="checkbox"] { width: 22px; height: 22px; accent-color: #30d158; }
-        .delete-btn { background: none; color: #ff453a; font-size: 16px; padding: 4px 8px; }
+        .action-btns { display: flex; gap: 4px; align-items: center; }
+        input[type="checkbox"] { width: 22px; height: 22px; accent-color: #30d158; margin-top: 2px; }
+        .icon-btn { background: none; font-size: 15px; padding: 4px 6px; border-radius: 6px; }
+        .cal-btn { color: #30d158; }
+        .edit-btn { color: #0a84ff; }
+        .delete-btn { color: #ff453a; font-weight: bold; }
 
         /* Acciones secundarias */
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
@@ -65,13 +75,17 @@
 
     <h1>📅 Mi Agenda Pro</h1>
 
-    <button id="notifBtn" class="notif-btn" onclick="requestNotifPermission()">🔔 Activar Notificaciones (10 min antes)</button>
+    <button id="notifBtn" class="notif-btn" onclick="requestNotifPermission()">🔔 Activar Notificaciones Web</button>
     
-    <!-- Formulario para agregar -->
-    <div class="card">
+    <!-- Formulario para agregar / editar -->
+    <div class="card" id="formCard">
         <div class="form-group">
-            <label>Evento / Recordatorio</label>
+            <label id="formLabel">Evento / Recordatorio</label>
             <input type="text" id="title" placeholder="¿Qué tienes pendiente?">
+        </div>
+        <div class="form-group">
+            <label>Notas Adicionales / Enlaces</label>
+            <textarea id="notes" placeholder="Ubicación, detalles, https://..."></textarea>
         </div>
         <div class="row">
             <div class="form-group">
@@ -92,18 +106,19 @@
                 <input type="time" id="time">
             </div>
         </div>
-        <button class="add-btn" onclick="addEvent()">Agregar a la Agenda</button>
+        <button class="add-btn" id="addBtn" onclick="addEvent()">Agregar a la Agenda</button>
+        <button class="cancel-btn" id="cancelEditBtn" onclick="cancelEdit()">Cancelar Edición</button>
     </div>
 
     <!-- Buscador -->
     <div class="search-box">
-        <input type="text" id="searchInput" placeholder="🔍 Buscar por nombre..." oninput="renderEvents()">
+        <input type="text" id="searchInput" placeholder="🔍 Buscar evento o nota..." oninput="renderEvents()">
     </div>
 
-    <!-- Filtros Temporales y Estados -->
+    <!-- Filtros Temporales -->
     <div class="filter-scroll" id="timeFilters">
         <button class="filter-btn active" onclick="setTimeFilter('Todas', this)">Todas</button>
-        <button class="filter-btn" onclick="setTimeFilter('Hoy', this)">Today</button>
+        <button class="filter-btn" onclick="setTimeFilter('Hoy', this)">Hoy</button>
         <button class="filter-btn" onclick="setTimeFilter('Semana', this)">Próx. 7 Días</button>
         <button class="filter-btn" onclick="setTimeFilter('Pendientes', this)">Pendientes</button>
         <button class="filter-btn" onclick="setTimeFilter('Completadas', this)">Completadas</button>
@@ -134,10 +149,10 @@
         
         let currentTimeFilter = 'Todas';
         let currentCatFilter = 'Todas';
+        let editingIndex = null;
         
         const defaultCategories = ['💼 Trabajo', '👤 Personal', '🏋️ Gym', '📚 Estudio', '📌 Otro'];
 
-        // Cargar fecha y hora actuales por defecto
         const now = new Date();
         dateInput.value = now.toISOString().split('T')[0];
         timeInput.value = now.toTimeString().slice(0, 5);
@@ -205,7 +220,7 @@
             }
             Notification.requestPermission().then(permission => {
                 if (permission === "granted") {
-                    document.getElementById('notifBtn').innerText = "✅ Notificaciones Activadas";
+                    document.getElementById('notifBtn').innerText = "✅ Notificaciones Web Activadas";
                     document.getElementById('notifBtn').style.color = "#30d158";
                 }
             });
@@ -227,7 +242,7 @@
                 if (diffMinutes > 0 && diffMinutes <= 10) {
                     playBeep();
                     new Notification(`⏰ En 10 min: ${ev.title}`, {
-                        body: `Categoría: ${ev.category} — Hora: ${ev.time}`,
+                        body: `${ev.notes ? ev.notes + '\n' : ''}Categoría: ${ev.category} — Hora: ${ev.time}`,
                         icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a84ff'/><text x='50%' y='68%' font-size='55' text-anchor='middle' fill='white'>📅</text></svg>"
                     });
                     ev.notified = true;
@@ -254,6 +269,74 @@
             renderEvents();
         }
 
+        function escapeHtml(text) {
+            return text.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+
+        function linkify(text) {
+            const escaped = escapeHtml(text);
+            const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+            return escaped.replace(urlRegex, function(url) {
+                const href = url.startsWith('www.') ? 'http://' + url : url;
+                return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+            });
+        }
+
+        // Exportar cita .ics nativa para el Calendario de iOS con alarma de 10 minutos
+        function exportToIcs(index) {
+            const events = getEvents();
+            const ev = events[index];
+            if (!ev) return;
+
+            const [year, month, day] = ev.date.split('-');
+            const [hour, minute] = ev.time.split(':');
+            
+            const dtStart = `${year}${month}${day}T${hour}${minute}00`;
+            
+            const startDate = new Date(year, parseInt(month) - 1, day, hour, minute);
+            const endDate = new Date(startDate.getTime() + 30 * 60000);
+            
+            const endYear = endDate.getFullYear();
+            const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
+            const endDay = String(endDate.getDate()).padStart(2, '0');
+            const endHour = String(endDate.getHours()).padStart(2, '0');
+            const endMin = String(endDate.getMinutes()).padStart(2, '0');
+            const dtEnd = `${endYear}${endMonth}${endDay}T${endHour}${endMin}00`;
+
+            const cleanTitle = ev.title.replace(/[\r\n]/g, " ");
+            const cleanNotes = (ev.notes || '').replace(/[\r\n]/g, "\\n");
+
+            const icsLines = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//Mi Agenda Offline//ES',
+                'CALSCALE:GREGORIAN',
+                'BEGIN:VEVENT',
+                `SUMMARY:${cleanTitle}`,
+                `DESCRIPTION:${cleanNotes}${ev.category ? '\\nCategoría: ' + ev.category : ''}`,
+                `DTSTART:${dtStart}`,
+                `DTEND:${dtEnd}`,
+                'BEGIN:VALARM',
+                'TRIGGER:-PT10M',
+                'ACTION:DISPLAY',
+                'DESCRIPTION:Recordatorio de Agenda',
+                'END:VALARM',
+                'END:VEVENT',
+                'END:VCALENDAR'
+            ];
+
+            const icsData = icsLines.join('\r\n');
+            const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.setAttribute('download', `${cleanTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         function renderEvents() {
             const events = getEvents();
             const list = document.getElementById('eventList');
@@ -267,13 +350,9 @@
             list.innerHTML = '';
 
             let filtered = events.filter(ev => {
-                // Buscador
-                if (search && !ev.title.toLowerCase().includes(search)) return false;
-                
-                // Filtro Categoría
+                if (search && !ev.title.toLowerCase().includes(search) && !(ev.notes && ev.notes.toLowerCase().includes(search))) return false;
                 if (currentCatFilter !== 'Todas' && ev.category !== currentCatFilter) return false;
 
-                // Filtro Tiempo / Estado
                 if (currentTimeFilter === 'Hoy') return ev.date === todayStr;
                 if (currentTimeFilter === 'Semana') return ev.date >= todayStr && ev.date <= nextWeekStr;
                 if (currentTimeFilter === 'Pendientes') return !ev.completed;
@@ -294,14 +373,21 @@
                 const item = document.createElement('div');
                 item.className = `event-item ${ev.completed ? 'completed' : ''}`;
                 
+                const notesHtml = ev.notes ? `<div class="event-notes">📝 ${linkify(ev.notes)}</div>` : '';
+
                 item.innerHTML = `
                     <input type="checkbox" ${ev.completed ? 'checked' : ''} onchange="toggleEvent(${realIndex})">
                     <div class="event-info">
                         <span class="event-title">${escapeHtml(ev.title)}</span>
+                        ${notesHtml}
                         <span class="event-time">📅 ${ev.date} — 🕒 ${ev.time}</span>
                         <div><span class="badge">${ev.category}</span></div>
                     </div>
-                    <button class="delete-btn" onclick="deleteEvent(${realIndex})">✕</button>
+                    <div class="action-btns">
+                        <button class="icon-btn cal-btn" title="Exportar a Calendario iOS" onclick="exportToIcs(${realIndex})">📅</button>
+                        <button class="icon-btn edit-btn" title="Editar" onclick="editEvent(${realIndex})">✏️</button>
+                        <button class="icon-btn delete-btn" title="Eliminar" onclick="deleteEvent(${realIndex})">✕</button>
+                    </div>
                 `;
                 list.appendChild(item);
             });
@@ -309,8 +395,11 @@
 
         function addEvent() {
             const titleInput = document.getElementById('title');
+            const notesInput = document.getElementById('notes');
             const categoryInput = document.getElementById('category');
+            
             const title = titleInput.value.trim();
+            const notes = notesInput.value.trim();
             const category = categoryInput.value;
             const date = dateInput.value;
             const time = timeInput.value;
@@ -318,12 +407,59 @@
             if (!title) return;
 
             const events = getEvents();
-            events.push({ title, category, date, time, completed: false, notified: false });
+
+            if (editingIndex !== null) {
+                events[editingIndex] = {
+                    ...events[editingIndex],
+                    title,
+                    notes,
+                    category,
+                    date,
+                    time,
+                    notified: false
+                };
+                cancelEdit();
+            } else {
+                events.push({ title, notes, category, date, time, completed: false, notified: false });
+                titleInput.value = '';
+                notesInput.value = '';
+            }
+
             saveEvents(events);
-            
-            titleInput.value = '';
             renderEvents();
             checkNotifications();
+        }
+
+        function editEvent(index) {
+            const events = getEvents();
+            const ev = events[index];
+            if (!ev) return;
+
+            editingIndex = index;
+            document.getElementById('title').value = ev.title;
+            document.getElementById('notes').value = ev.notes || '';
+            document.getElementById('category').value = ev.category;
+            dateInput.value = ev.date;
+            timeInput.value = ev.time;
+
+            const addBtn = document.getElementById('addBtn');
+            addBtn.innerText = "💾 Guardar Cambios";
+            addBtn.style.backgroundColor = "#30d158";
+            
+            document.getElementById('cancelEditBtn').style.display = "block";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            editingIndex = null;
+            document.getElementById('title').value = '';
+            document.getElementById('notes').value = '';
+            
+            const addBtn = document.getElementById('addBtn');
+            addBtn.innerText = "Agregar a la Agenda";
+            addBtn.style.backgroundColor = "#0a84ff";
+            
+            document.getElementById('cancelEditBtn').style.display = "none";
         }
 
         function toggleEvent(index) {
@@ -334,6 +470,7 @@
         }
 
         function deleteEvent(index) {
+            if (editingIndex === index) cancelEdit();
             const events = getEvents();
             events.splice(index, 1);
             saveEvents(events);
@@ -344,6 +481,7 @@
             if (confirm("¿Deseas borrar permanentemente todas las tareas marcadas como completadas?")) {
                 const events = getEvents().filter(e => !e.completed);
                 saveEvents(events);
+                cancelEdit();
                 renderEvents();
             }
         }
@@ -365,6 +503,7 @@
                     const imported = JSON.parse(e.target.result);
                     if (Array.isArray(imported)) {
                         saveEvents(imported);
+                        cancelEdit();
                         renderEvents();
                         alert("¡Respaldo importado con éxito!");
                     }
@@ -375,14 +514,8 @@
             fileReader.readAsText(event.target.files[0]);
         }
 
-        function escapeHtml(text) {
-            return text.replace(/[&<>"']/g, function(m) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-            });
-        }
-
         if ("Notification" in window && Notification.permission === "granted") {
-            document.getElementById('notifBtn').innerText = "✅ Notificaciones Activadas";
+            document.getElementById('notifBtn').innerText = "✅ Notificaciones Web Activadas";
             document.getElementById('notifBtn').style.color = "#30d158";
         }
 
