@@ -3,31 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <!-- Meta tags para que iOS lo abra como microapp nativa -->
+    
+    <!-- Meta tags PWA para iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Mi Agenda">
+    
+    <!-- Ícono SVG Data URI automático (sin requerir archivo icon.png) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a84ff'/><text x='50%' y='68%' font-size='55' text-anchor='middle' fill='white'>📅</text></svg>">
+    
     <title>Mi Agenda Offline</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: #000000; color: #ffffff; padding: 20px; padding-top: calc(env(safe-area-inset-top) + 20px); max-width: 500px; margin: 0 auto; }
-        h1 { font-size: 26px; font-weight: 700; margin-bottom: 20px; color: #0a84ff; text-align: center; }
+        body { background-color: #000000; color: #ffffff; padding: 16px; padding-top: calc(env(safe-area-inset-top) + 16px); max-width: 500px; margin: 0 auto; }
+        h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; color: #0a84ff; text-align: center; }
         
-        .card { background-color: #1c1c1e; border-radius: 16px; padding: 16px; margin-bottom: 24px; }
+        .card { background-color: #1c1c1e; border-radius: 16px; padding: 16px; margin-bottom: 20px; }
         .form-group { margin-bottom: 12px; }
         label { display: block; font-size: 11px; text-transform: uppercase; color: #8e8e93; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; }
-        input[type="text"], input[type="date"], input[type="time"] { width: 100%; padding: 12px; border-radius: 10px; border: none; background-color: #2c2c2e; color: #fff; font-size: 16px; outline: none; }
+        input[type="text"], input[type="date"], input[type="time"], select { width: 100%; padding: 12px; border-radius: 10px; border: none; background-color: #2c2c2e; color: #fff; font-size: 15px; outline: none; }
         .row { display: flex; gap: 10px; }
         .row .form-group { flex: 1; }
         
-        button.add-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; background-color: #0a84ff; color: white; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+        button.add-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; background-color: #0a84ff; color: white; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 4px; }
         button.add-btn:active { opacity: 0.7; }
         
+        button.notif-btn { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #3a3a3c; background-color: #1c1c1e; color: #30d158; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 16px; }
+
+        /* Categorías */
+        .category-filter { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 12px; }
+        .filter-btn { padding: 6px 14px; border-radius: 20px; border: none; background-color: #1c1c1e; color: #8e8e93; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .filter-btn.active { background-color: #0a84ff; color: white; }
+
+        .badge { display: inline-block; font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 700; text-transform: uppercase; margin-top: 4px; }
+        .badge-trabajo { background-color: rgba(10, 132, 255, 0.2); color: #0a84ff; }
+        .badge-personal { background-color: rgba(48, 209, 88, 0.2); color: #30d158; }
+        .badge-gym { background-color: rgba(255, 159, 10, 0.2); color: #ff9f0a; }
+        .badge-estudio { background-color: rgba(191, 90, 242, 0.2); color: #bf5af2; }
+        .badge-otro { background-color: rgba(142, 142, 147, 0.2); color: #8e8e93; }
+
+        /* Lista de Eventos */
         .event-list { display: flex; flex-direction: column; gap: 10px; }
         .event-item { background-color: #1c1c1e; border-radius: 14px; padding: 14px; display: flex; align-items: center; justify-content: space-between; }
-        .event-info { display: flex; flex-direction: column; gap: 4px; flex: 1; margin: 0 12px; }
+        .event-info { display: flex; flex-direction: column; gap: 2px; flex: 1; margin: 0 12px; }
         .event-title { font-size: 16px; font-weight: 500; word-break: break-word; }
-        .event-time { font-size: 13px; color: #8e8e93; }
+        .event-time { font-size: 12px; color: #8e8e93; }
         .event-item.completed .event-title { text-decoration: line-through; color: #636366; }
         
         input[type="checkbox"] { width: 22px; height: 22px; accent-color: #30d158; cursor: pointer; }
@@ -37,11 +57,25 @@
 <body>
 
     <h1>📅 Mi Agenda</h1>
+
+    <button id="notifBtn" class="notif-btn" onclick="requestNotifPermission()">🔔 Activar Notificaciones (10 min antes)</button>
     
     <div class="card">
         <div class="form-group">
             <label>Evento o Recordatorio</label>
             <input type="text" id="title" placeholder="¿Qué tienes pendiente?">
+        </div>
+        <div class="row">
+            <div class="form-group">
+                <label>Categoría</label>
+                <select id="category">
+                    <option value="Trabajo">💼 Trabajo</option>
+                    <option value="Personal">👤 Personal</option>
+                    <option value="Gym">🏋️ Gym</option>
+                    <option value="Estudio">📚 Estudio</option>
+                    <option value="Otro">📌 Otro</option>
+                </select>
+            </div>
         </div>
         <div class="row">
             <div class="form-group">
@@ -56,13 +90,23 @@
         <button class="add-btn" onclick="addEvent()">Agregar a la Agenda</button>
     </div>
 
+    <!-- Filtros de Categoría -->
+    <div class="category-filter" id="categoryFilter">
+        <button class="filter-btn active" onclick="filterCategory('Todas')">Todas</button>
+        <button class="filter-btn" onclick="filterCategory('Trabajo')">💼 Trabajo</button>
+        <button class="filter-btn" onclick="filterCategory('Personal')">👤 Personal</button>
+        <button class="filter-btn" onclick="filterCategory('Gym')">🏋️ Gym</button>
+        <button class="filter-btn" onclick="filterCategory('Estudio')">📚 Estudio</button>
+        <button class="filter-btn" onclick="filterCategory('Otro')">📌 Otro</button>
+    </div>
+
     <div class="event-list" id="eventList"></div>
 
     <script>
         const dateInput = document.getElementById('date');
         const timeInput = document.getElementById('time');
+        let currentFilter = 'Todas';
         
-        // Cargar fecha y hora actuales por defecto
         const now = new Date();
         dateInput.value = now.toISOString().split('T')[0];
         timeInput.value = now.toTimeString().slice(0, 5);
@@ -75,29 +119,91 @@
             localStorage.setItem('iphone_agenda_db', JSON.stringify(events));
         }
 
+        function requestNotifPermission() {
+            if (!("Notification" in window)) {
+                alert("Este navegador no soporta notificaciones.");
+                return;
+            }
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    document.getElementById('notifBtn').innerText = "✅ Notificaciones Activadas";
+                    document.getElementById('notifBtn').style.color = "#30d158";
+                } else {
+                    alert("Permiso de notificaciones denegado.");
+                }
+            });
+        }
+
+        function checkNotifications() {
+            if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+            const events = getEvents();
+            const currentTime = new Date();
+            let updated = false;
+
+            events.forEach(ev => {
+                if (ev.completed || ev.notified) return;
+
+                const eventDateTime = new Date(`${ev.date}T${ev.time}`);
+                const diffMinutes = (eventDateTime - currentTime) / (1000 * 60);
+
+                // Disparar si faltan 10 minutos o menos (y no ha pasado la hora)
+                if (diffMinutes > 0 && diffMinutes <= 10) {
+                    new Notification(`⏰ En 10 min: ${ev.title}`, {
+                        body: `Categoría: ${ev.category} — Hora: ${ev.time}`,
+                        icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a84ff'/><text x='50%' y='68%' font-size='55' text-anchor='middle' fill='white'>📅</text></svg>"
+                    });
+                    ev.notified = true;
+                    updated = true;
+                }
+            });
+
+            if (updated) saveEvents(events);
+        }
+
+        // Revisar notificaciones cada 30 segundos
+        setInterval(checkNotifications, 30000);
+
+        function filterCategory(cat) {
+            currentFilter = cat;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.includes(cat) || (cat === 'Todas' && btn.innerText === 'Todas'));
+            });
+            renderEvents();
+        }
+
         function renderEvents() {
             const events = getEvents();
             const list = document.getElementById('eventList');
             list.innerHTML = '';
 
-            if (events.length === 0) {
-                list.innerHTML = '<p style="text-align: center; color: #8e8e93; padding: 20px;">No hay eventos registrados.</p>';
+            let filteredEvents = events;
+            if (currentFilter !== 'Todas') {
+                filteredEvents = events.filter(e => e.category === currentFilter);
+            }
+
+            if (filteredEvents.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #8e8e93; padding: 20px;">No hay eventos en esta categoría.</p>';
                 return;
             }
 
-            // Ordenar por fecha y hora
-            events.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+            filteredEvents.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 
-            events.forEach((ev, index) => {
+            filteredEvents.forEach((ev) => {
+                const realIndex = events.findIndex(e => e.title === ev.title && e.date === ev.date && e.time === ev.time);
                 const item = document.createElement('div');
                 item.className = `event-item ${ev.completed ? 'completed' : ''}`;
+                
+                const catClass = `badge-${ev.category.toLowerCase()}`;
+                
                 item.innerHTML = `
-                    <input type="checkbox" ${ev.completed ? 'checked' : ''} onchange="toggleEvent(${index})">
+                    <input type="checkbox" ${ev.completed ? 'checked' : ''} onchange="toggleEvent(${realIndex})">
                     <div class="event-info">
                         <span class="event-title">${escapeHtml(ev.title)}</span>
                         <span class="event-time">📅 ${ev.date} — 🕒 ${ev.time}</span>
+                        <div><span class="badge ${catClass}">${ev.category}</span></div>
                     </div>
-                    <button class="delete-btn" onclick="deleteEvent(${index})">✕</button>
+                    <button class="delete-btn" onclick="deleteEvent(${realIndex})">✕</button>
                 `;
                 list.appendChild(item);
             });
@@ -105,18 +211,21 @@
 
         function addEvent() {
             const titleInput = document.getElementById('title');
+            const categoryInput = document.getElementById('category');
             const title = titleInput.value.trim();
+            const category = categoryInput.value;
             const date = dateInput.value;
             const time = timeInput.value;
 
             if (!title) return;
 
             const events = getEvents();
-            events.push({ title, date, time, completed: false });
+            events.push({ title, category, date, time, completed: false, notified: false });
             saveEvents(events);
             
             titleInput.value = '';
             renderEvents();
+            checkNotifications();
         }
 
         function toggleEvent(index) {
@@ -137,6 +246,12 @@
             return text.replace(/[&<>"']/g, function(m) {
                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
             });
+        }
+
+        // Estado inicial de permisos de notificación
+        if ("Notification" in window && Notification.permission === "granted") {
+            document.getElementById('notifBtn').innerText = "✅ Notificaciones Activadas";
+            document.getElementById('notifBtn').style.color = "#30d158";
         }
 
         renderEvents();
