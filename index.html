@@ -3,15 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    
-    <!-- Meta tags PWA para iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Mi Agenda">
-    
-    <!-- Ícono SVG Data URI -->
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a84ff'/><text x='50%' y='68%' font-size='55' text-anchor='middle' fill='white'>📅</text></svg>">
-    
     <title>Mi Agenda Pro Offline</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -26,7 +21,6 @@
         .row { display: flex; gap: 10px; }
         .row .form-group { flex: 1; }
         
-        /* Botones generales */
         button { cursor: pointer; border: none; font-weight: 600; transition: opacity 0.2s; }
         button:active { opacity: 0.7; }
         
@@ -34,19 +28,16 @@
         .cancel-btn { width: 100%; padding: 10px; border-radius: 10px; background-color: #3a3a3c; color: #ff453a; font-size: 13px; margin-top: 8px; display: none; }
         .notif-btn { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #3a3a3c; background-color: #1c1c1e; color: #30d158; font-size: 13px; margin-bottom: 14px; }
         
-        /* Buscador y Filtros */
         .search-box { margin-bottom: 14px; }
         .filter-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; scrollbar-width: none; }
         .filter-scroll::-webkit-scrollbar { display: none; }
         .filter-btn { padding: 6px 14px; border-radius: 20px; background-color: #1c1c1e; color: #8e8e93; font-size: 12px; white-space: nowrap; }
         .filter-btn.active { background-color: #0a84ff; color: white; }
 
-        /* Categorías y Badges */
         .cat-row { display: flex; gap: 8px; align-items: center; }
         .add-cat-btn { padding: 12px; background-color: #2c2c2e; color: #0a84ff; border-radius: 10px; font-size: 18px; line-height: 1; }
         .badge { display: inline-block; font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 700; text-transform: uppercase; margin-top: 4px; background-color: rgba(10, 132, 255, 0.2); color: #0a84ff; }
 
-        /* Lista de Eventos */
         .event-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
         .event-item { background-color: #1c1c1e; border-radius: 14px; padding: 14px; display: flex; align-items: flex-start; justify-content: space-between; }
         .event-info { display: flex; flex-direction: column; gap: 4px; flex: 1; margin: 0 12px; }
@@ -56,16 +47,15 @@
         .event-time { font-size: 12px; color: #8e8e93; margin-top: 2px; }
         .event-item.completed .event-title { text-decoration: line-through; color: #636366; }
         .event-item.completed .event-notes { color: #636366; background-color: #242426; }
-        .event-item.completed .event-notes a { color: #636366; }
         
         .action-btns { display: flex; gap: 4px; align-items: center; }
         input[type="checkbox"] { width: 22px; height: 22px; accent-color: #30d158; margin-top: 2px; }
         .icon-btn { background: none; font-size: 15px; padding: 4px 6px; border-radius: 6px; }
+        .direct-btn { color: #ff9f0a; font-weight: bold; }
         .cal-btn { color: #30d158; }
         .edit-btn { color: #0a84ff; }
         .delete-btn { color: #ff453a; font-weight: bold; }
 
-        /* Acciones secundarias */
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .btn-sec { padding: 10px; border-radius: 10px; background-color: #2c2c2e; color: #8e8e93; font-size: 12px; text-align: center; }
         .btn-danger { background-color: rgba(255, 69, 58, 0.15); color: #ff453a; grid-column: span 2; }
@@ -77,7 +67,6 @@
 
     <button id="notifBtn" class="notif-btn" onclick="requestNotifPermission()">🔔 Activar Notificaciones Web</button>
     
-    <!-- Formulario para agregar / editar -->
     <div class="card" id="formCard">
         <div class="form-group">
             <label id="formLabel">Evento / Recordatorio</label>
@@ -110,12 +99,10 @@
         <button class="cancel-btn" id="cancelEditBtn" onclick="cancelEdit()">Cancelar Edición</button>
     </div>
 
-    <!-- Buscador -->
     <div class="search-box">
         <input type="text" id="searchInput" placeholder="🔍 Buscar evento o nota..." oninput="renderEvents()">
     </div>
 
-    <!-- Filtros Temporales -->
     <div class="filter-scroll" id="timeFilters">
         <button class="filter-btn active" onclick="setTimeFilter('Todas', this)">Todas</button>
         <button class="filter-btn" onclick="setTimeFilter('Hoy', this)">Hoy</button>
@@ -124,13 +111,10 @@
         <button class="filter-btn" onclick="setTimeFilter('Completadas', this)">Completadas</button>
     </div>
 
-    <!-- Filtros por Categoría -->
     <div class="filter-scroll" id="categoryFilterBar"></div>
 
-    <!-- Lista de eventos -->
     <div class="event-list" id="eventList"></div>
 
-    <!-- Acciones / Copia de seguridad -->
     <div class="card">
         <label>Gestión de Datos</label>
         <div class="action-grid">
@@ -284,7 +268,17 @@
             });
         }
 
-        // Exportar cita .ics nativa para el Calendario de iOS con alarma de 10 minutos
+        // Ejecutar Atajo de iOS directamente
+        function addDirectToIosCalendar(index) {
+            const events = getEvents();
+            const ev = events[index];
+            if (!ev) return;
+
+            const inputText = `${ev.title} el ${ev.date} a las ${ev.time}`;
+            const shortcutUrl = `shortcuts://run-shortcut?name=AgregarAgenda&input=${encodeURIComponent(inputText)}`;
+            window.location.href = shortcutUrl;
+        }
+
         function exportToIcs(index) {
             const events = getEvents();
             const ev = events[index];
@@ -384,7 +378,8 @@
                         <div><span class="badge">${ev.category}</span></div>
                     </div>
                     <div class="action-btns">
-                        <button class="icon-btn cal-btn" title="Exportar a Calendario iOS" onclick="exportToIcs(${realIndex})">📅</button>
+                        <button class="icon-btn direct-btn" title="Guardar Directo con Atajo" onclick="addDirectToIosCalendar(${realIndex})">⚡ Directo</button>
+                        <button class="icon-btn cal-btn" title="Exportar archivo .ics" onclick="exportToIcs(${realIndex})">📅</button>
                         <button class="icon-btn edit-btn" title="Editar" onclick="editEvent(${realIndex})">✏️</button>
                         <button class="icon-btn delete-btn" title="Eliminar" onclick="deleteEvent(${realIndex})">✕</button>
                     </div>
